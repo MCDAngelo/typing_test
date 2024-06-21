@@ -17,7 +17,7 @@ class TypeTest:
         self.timer = timer
         self.key_strokes = []
         self.final_input_words = []
-        self.text_to_copy = []
+        self.text_to_copy = generate_random_paragraph()
         self.current_word_index = 0
         self.current_word = ""
         self.current_input = ""
