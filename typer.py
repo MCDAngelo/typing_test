@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import messagebox
 
 import ttkbootstrap as ttk
 
@@ -55,15 +56,22 @@ class TypeTest:
     def check_typing(self):
         self.get_word_from_input()
         self.total_characters = len(self.key_strokes)
+        self.total_words = len(self.final_input_words)
         self.correct_words = []
         for example_word, input_word in zip(self.text_to_copy, self.final_input_words):
             if example_word.lower().strip() == input_word.lower().strip():
                 self.correct_words.append(example_word.strip())
         self.total_correct_words = len(self.correct_words)
-        # TODO:
-        # Calculate wpm, cwpm, kpm etc and surface in a message box or score area in UI
-        print(
-            f"You typed {self.total_correct_words} /{len(self.text_to_copy)} words correctly"
+        self.wpm = self.total_words / self.timer.original_time
+        self.kpm = self.total_characters / self.timer.original_time
+        self.cwpm = self.total_correct_words / self.timer.original_time
+        self.accuracy = self.total_correct_words / len(self.text_to_copy)
+        self.show_scores()
+
+    def show_scores(self):
+        score_msg = (
+            f"Total words: {self.total_words} - Accuracy: {self.accuracy*100:.0f}%\n"
+            f"WPM: {self.wpm:.2f} - CWPM: {self.cwpm:.2f}\n"
+            f"Total keystrokes: {self.total_characters} - KPM: {self.kpm:.2f}"
         )
-        print(f"You typed {self.final_input_words} words in total")
-        print(f"You typed {self.total_characters} characters in total")
+        self.score_messagebox = messagebox.showinfo("Final Score", score_msg)

@@ -4,6 +4,7 @@ import ttkbootstrap as ttk
 class Timer(ttk.Label):
     def __init__(self, parent, seconds):
         super().__init__(parent)
+        self.original_time = seconds
         self.time = seconds
         self.running = False
         self.show_time()
