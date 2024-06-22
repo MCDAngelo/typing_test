@@ -19,6 +19,9 @@ class TypeTest:
         self.reset_vars()
 
     def reset_vars(self):
+        if self.timekeeper.timer:
+            self.timekeeper.timer.stop()
+            self.timekeeper = Timekeeper(self.window)
         self.timekeeper.new_timer(self.test_duration, column=2)
         self.timekeeper.timer.config(font=("Helvetica", 36))
         self.key_strokes = []
@@ -47,10 +50,13 @@ class TypeTest:
         if self.timekeeper.timer.running:
             self.window.after(1000, self.run_test)
         else:
-            self.input_text.config(state="disabled")
-            self.spellcheck_current_input()
-            self.get_word_from_input()
-            self.check_typing()
+            if self.timekeeper.timer.time == 0:
+                self.input_text.config(state="disabled")
+                self.spellcheck_current_input()
+                self.get_word_from_input()
+                self.check_typing()
+            else:
+                return
 
     def create_input_text(self):
         self.input_text = ttk.Entry(self.window, width=20, font=("", 22))
@@ -150,7 +156,6 @@ class TypeTest:
 
     def key_handler(self, event):
         if len(self.key_strokes) == 0:
-            print("starting timer")
             self.start_test()
         if self.timekeeper.timer.running:
             self.highlight_current_word()
@@ -192,8 +197,8 @@ class TypeTest:
 
     def show_scores(self):
         score_msg = (
-            f"Corrected cpm: {self.corrected_cpm:.2f}\n"
             f"Corrected wpm: {self.wpm:.2f}\n"
+            f"Corrected cpm: {self.corrected_cpm:.2f}\n"
             f"Raw cpm: {self.raw_cpm:.2f}\n"
         )
         self.score_messagebox = messagebox.showinfo("Final Score", score_msg)

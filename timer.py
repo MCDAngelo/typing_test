@@ -32,15 +32,10 @@ class Timekeeper:
         self.timer = None
 
     def new_timer(self, seconds, row=0, column=0):
-        if seconds <= 0:
-            print("Timer must be set for more than 0 seconds.")
-        if self.timer is not None:
-            self.timer.time = seconds
-        else:
-            self.timer = Timer(self.window, seconds)
-            self.timer.grid(row=row, column=column, padx=20, pady=(10, 0))
+        self.timer = Timer(self.window, seconds)
+        self.timer.grid(row=row, column=column, padx=20, pady=(10, 0))
 
     def tick(self):
         self.window.after(1000, self.tick)
-        if self.timer is not None and self.timer.running:
+        if (self.timer is not None) and (self.timer.running):
             self.timer.tick()
