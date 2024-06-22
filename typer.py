@@ -1,4 +1,5 @@
 import tkinter as tk
+from functools import reduce
 from tkinter import messagebox
 
 import ttkbootstrap as ttk
@@ -10,7 +11,7 @@ from timer import Timekeeper
 class TypeTest:
     def __init__(self, root):
         self.window = root
-        self.test_duration = 6
+        self.test_duration = 60
         self.timekeeper = Timekeeper(self.window)
         self.create_original_textbox()
         self.create_input_text()
@@ -18,9 +19,11 @@ class TypeTest:
         self.reset_vars()
 
     def reset_vars(self):
-        self.timekeeper.new_timer(self.test_duration)
+        self.timekeeper.new_timer(self.test_duration, column=2)
+        self.timekeeper.timer.config(font=("Helvetica", 36))
         self.key_strokes = []
         self.final_input_words = []
+        self.incorrect_words = []
         self.text_to_copy = generate_random_paragraph()
         self.current_word_index = 0
         self.current_char_index = 0
@@ -50,14 +53,20 @@ class TypeTest:
             self.check_typing()
 
     def create_input_text(self):
-        self.input_text = ttk.Entry(self.window, width=30)
-        self.input_text.grid(row=3, column=1, columnspan=2, padx=50, pady=(0, 20))
+        self.input_text = ttk.Entry(self.window, width=20, font=("", 22))
+        self.input_text.insert(0, "Start typing here ...")
+        self.input_text.bind(
+            "<FocusIn>", lambda args: self.input_text.delete("0", "end")
+        )
+        self.input_text.grid(row=3, column=1, columnspan=6, padx=50, pady=(0, 30))
 
     def create_original_textbox(self):
-        self.original_textbox = ttk.Text(self.window, width=80, height=10)
+        self.original_textbox = ttk.Text(
+            self.window, width=50, height=10, wrap=tk.WORD, font=("Helvetica", 32)
+        )
         self.original_textbox.insert(tk.END, "Example text")
         self.original_textbox.configure(state=tk.DISABLED)
-        self.original_textbox.grid(row=1, column=1, columnspan=3, padx=20, pady=10)
+        self.original_textbox.grid(row=1, column=1, columnspan=3, padx=80, pady=30)
         self.original_textbox.tag_configure("highlight", background="skyblue")
         self.original_textbox.tag_configure("correct_word", foreground="blue")
         self.original_textbox.tag_configure("correct_input", foreground="white")
@@ -131,6 +140,7 @@ class TypeTest:
                 "correct_word", self.highlighted_start, self.highlighted_end
             )
         else:
+            self.incorrect_words.append(self.input_text.get())
             self.original_textbox.tag_remove(
                 "correct_input", self.highlighted_start, self.highlighted_end
             )
@@ -162,25 +172,28 @@ class TypeTest:
         self.total_characters = len(self.key_strokes)
         self.total_words = len(self.final_input_words)
         self.correct_words = []
-        self.incorrect_words = []
         for example_word, input_word in zip(self.words_to_copy, self.final_input_words):
             if example_word.lower().strip() == input_word.lower().strip():
                 self.correct_words.append(example_word.strip())
         self.total_correct_words = len(self.correct_words)
+        if len(self.incorrect_words) == 0:
+            incorrect_chars = 0
+        else:
+            incorrect_chars = reduce(
+                lambda x, y: x + y, map(lambda x: len(x), self.incorrect_words)
+            )
 
-        # TODO: update to logic outlined in https://typing-speed-test.aoeu.eu FAQ
-        self.kpm = self.total_characters / self.test_duration
-        self.cwpm = self.total_correct_words / self.test_duration
-        self.wpm = self.total_words / self.test_duration
-        self.accuracy = self.total_correct_words / len(
-            self.words_to_copy[: self.current_word_index]
+        self.raw_cpm = self.total_characters / (self.test_duration // 60)
+        self.corrected_cpm = (self.total_characters - incorrect_chars) / (
+            self.test_duration // 60
         )
+        self.wpm = self.corrected_cpm / 5
         self.show_scores()
 
     def show_scores(self):
         score_msg = (
-            f"Total words: {self.total_words} - Accuracy: {self.accuracy*100:.0f}%\n"
-            f"WPM: {self.wpm:.2f} - CWPM: {self.cwpm:.2f}\n"
-            f"Total keystrokes: {self.total_characters} - KPM: {self.kpm:.2f}"
+            f"Corrected cpm: {self.corrected_cpm:.2f}\n"
+            f"Corrected wpm: {self.wpm:.2f}\n"
+            f"Raw cpm: {self.raw_cpm:.2f}\n"
         )
         self.score_messagebox = messagebox.showinfo("Final Score", score_msg)
